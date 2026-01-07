@@ -1,0 +1,124 @@
+{% extends "layout/basic.html" %}
+{% block content %}
+<div class="row">
+  <div class="medium-9 columns">
+    <div class="section">
+      <div class="section__header">
+        <h1 class="section__title">{{ _(page_name) }}</h1>
+      </div>
+      <div class="section__body">
+        <form method="post" enctype="multipart/form-data">
+          <input type="hidden" name="operation" value="update">
+          
+          <div class="row">
+            <div class="columns">
+              <label>{{ _('Title') }}</label>
+              <input type="text" name="title" value="{{ cdoc.title if cdoc else '' }}" required>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="columns">
+              <label>{{ _('Introduction') }}</label>
+              <textarea name="content" class="textbox monospace" data-markdown>{{ cdoc.content if cdoc else '' }}</textarea>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="columns">
+              <label>{{ _('Problem IDs') }} ({{ _('comma separated') }})</label>
+              <input type="text" name="pids" value="{{ pids }}" placeholder="1001, 1002, 1003">
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="medium-6 columns">
+              <label>{{ _('Begin Date') }}</label>
+              <input type="date" name="beginAtDate" value="{{ cdoc.beginAt|date('YYYY-MM-DD') if cdoc else '' }}" required>
+            </div>
+            <div class="medium-6 columns">
+              <label>{{ _('Begin Time') }}</label>
+              <input type="time" name="beginAtTime" value="{{ cdoc.beginAt|date('HH:mm') if cdoc else '00:00' }}" required>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="medium-6 columns">
+              <label>{{ _('End Date') }}</label>
+              <input type="date" name="endAtDate" value="{{ cdoc.endAt|date('YYYY-MM-DD') if cdoc else '' }}" required>
+            </div>
+            <div class="medium-6 columns">
+              <label>{{ _('End Time') }}</label>
+              <input type="time" name="endAtTime" value="{{ cdoc.endAt|date('HH:mm') if cdoc else '23:59' }}" required>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="columns">
+              <label>{{ _('Teachers') }} ({{ _('User IDs, comma separated') }})</label>
+              <input type="text" name="teachers" value="{{ (cdoc.teachers or [])|join(',') if cdoc else '' }}" placeholder="1, 2, 3">
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="columns">
+              <label>{{ _('Maintainers') }} ({{ _('User IDs, comma separated') }})</label>
+              <input type="text" name="maintainer" value="{{ (cdoc.maintainer or [])|join(',') if cdoc else '' }}" placeholder="1, 2, 3">
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="medium-6 columns">
+              <label>{{ _('Assign to Groups') }} ({{ _('comma separated') }})</label>
+              <input type="text" name="assign" value="{{ (cdoc.assign or [])|join(',') if cdoc else '' }}">
+            </div>
+            <div class="medium-6 columns">
+              <label>{{ _('Classes') }} ({{ _('comma separated') }})</label>
+              <input type="text" name="classes" value="{{ (cdoc.classes or [])|join(',') if cdoc else '' }}">
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="columns">
+              <button type="submit" class="rounded primary button">{{ _('Save') }}</button>
+              {% if cdoc %}
+              <a href="{{ url('course_detail', cid=cdoc.docId) }}" class="rounded button">{{ _('Cancel') }}</a>
+              {% else %}
+              <a href="{{ url('course_main') }}" class="rounded button">{{ _('Cancel') }}</a>
+              {% endif %}
+            </div>
+          </div>
+        </form>
+        
+        {% if cdoc %}
+        <hr>
+        <h2>{{ _('Danger Zone') }}</h2>
+        <form method="post" onsubmit="return confirm('{{ _('Are you sure you want to delete this course?') }}');">
+          <input type="hidden" name="operation" value="delete">
+          <button type="submit" class="rounded button danger">{{ _('Delete Course') }}</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  
+  <div class="medium-3 columns">
+    <div class="section side">
+      <div class="section__header">
+        <h1 class="section__title">{{ _('Available Groups') }}</h1>
+      </div>
+      <div class="section__body">
+        {% if groups|length > 0 %}
+        <ul class="menu">
+          {% for group in groups %}
+          <li class="menu__item">{{ group.name }}</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted">{{ _('No groups available.') }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "layout/basic.html" %}
+{% block content %}
+<div class="row">
+  <div class="medium-12 columns">
+    <div class="section">
+      <div class="section__header">
+        <h1 class="section__title">{{ _('Scoreboard') }} - {{ cdoc.title }}</h1>
+        <div class="section__tools">
+          <a href="{{ url('course_detail', cid=cdoc.docId) }}" class="tool-button" data-tooltip="{{ _('Back to Course') }}">
+            <span class="icon icon-back"></span>
+          </a>
+        </div>
+      </div>
+      <div class="section__body">
+        {% if rows|length > 0 %}
+        <div class="table-responsive">
+          <table class="data-table scoreboard">
+            <colgroup>
+              <col class="col--rank" style="width: 60px;">
+              <col class="col--user">
+              {% for pid in cdoc.pids %}
+              <col class="col--problem">
+              {% endfor %}
+              <col class="col--total">
+            </colgroup>
+            <thead>
+              <tr>
+                <th class="col--rank">#</th>
+                <th class="col--user">{{ _('Student') }}</th>
+                {% for pid in cdoc.pids %}
+                <th class="col--problem">
+                  {% if pdict[pid] %}
+                  <a href="{{ url('problem_detail', pid=pid) }}" title="{{ pdict[pid].title }}">
+                    {{ loop.index }}
+                  </a>
+                  {% else %}
+                  {{ loop.index }}
+                  {% endif %}
+                </th>
+                {% endfor %}
+                <th class="col--total">{{ _('Total Score') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+              <tr>
+                <td class="col--rank">{{ loop.index }}</td>
+                <td class="col--user">
+                  {% if row.user %}
+                  <a href="{{ url('user_detail', uid=row.uid) }}">{{ row.user.uname }}</a>
+                  {% else %}
+                  {{ _('Unknown User') }}
+                  {% endif %}
+                </td>
+                {% for pid in cdoc.pids %}
+                <td class="col--problem">
+                  {% set score = row.scores[pid] %}
+                  <span class="{{ 'pass' if score >= 100 else 'fail' if score > 0 else '' }}">
+                    {{ score if score else '-' }}
+                  </span>
+                </td>
+                {% endfor %}
+                <td class="col--total">
+                  <strong>{{ row.totalScore }}</strong>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {{ paginate(page, cpcount, url('course_scoreboard', cid=cdoc.docId)) }}
+        {% else %}
+        <p class="text-muted">{{ _('No students enrolled yet.') }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
