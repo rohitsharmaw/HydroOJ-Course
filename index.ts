@@ -570,7 +570,8 @@ class CourseRecordsHandler extends Handler {
             pid: { $in: cdoc.pids },
         };
 
-        // Only show own records if user doesn't have special permissions
+        // Only show own records if user doesn't have permission to view all records
+        // Users who can view scoreboard (teachers/admins) can see all students' records
         if (!this.user.hasPerm(PERM.PERM_VIEW_HOMEWORK_SCOREBOARD)) {
             query.uid = this.user._id;
         }
