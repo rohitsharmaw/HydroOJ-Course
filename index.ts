@@ -462,7 +462,7 @@ class CourseFilesHandler extends Handler {
         }
         const file = this.request.files?.file;
         if (!file) throw new ValidationError('file');
-        const size = Math.sum((this.cdoc.files || []).map((i) => i.size)) + file.size;
+        const size = (this.cdoc.files || []).reduce((acc, i) => acc + (i.size || 0), 0) + file.size;
         if (size >= SystemModel.get('limit.contest_files_size')) {
             throw new FileLimitExceededError('size');
         }
