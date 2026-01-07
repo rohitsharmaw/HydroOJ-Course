@@ -49,39 +49,18 @@
           {{ cdoc.content|markdown|safe }}
         </div>
         
-        {% if files|length > 0 %}
-        <h2>{{ _('Course Materials') }}</h2>
-        <table class="data-table">
-          <colgroup>
-            <col class="col--name">
-            <col class="col--size">
-          </colgroup>
-          <tbody>
-            {% for file in files %}
-            <tr>
-              <td class="col--name">
-                <a href="{{ url('course_file_download', cid=cdoc.docId, filename=file.name) }}">
-                  <span class="icon icon-file"></span>
-                  {{ file.name }}
-                </a>
-              </td>
-              <td class="col--size">{{ file.size|size }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        {% endif %}
-        
         {% if pdict|length > 0 %}
         <h2>{{ _('Problem List') }}</h2>
         <table class="data-table">
           <colgroup>
+            <col class="col--index" style="width: 50px;">
             <col class="col--problem">
             <col class="col--status">
             <col class="col--score">
           </colgroup>
           <thead>
             <tr>
+              <th class="col--index">#</th>
               <th class="col--problem">{{ _('Problem') }}</th>
               <th class="col--status">{{ _('Status') }}</th>
               <th class="col--score">{{ _('Score') }}</th>
@@ -91,6 +70,7 @@
             {% for pid in cdoc.pids %}
             {% set pdoc = pdict[pid] %}
             <tr>
+              <td class="col--index">{{ loop.index }}</td>
               <td class="col--problem">
                 {% if pdoc %}
                 <a href="{{ url('problem_detail', pid=pdoc.docId) }}">{{ pdoc.title }}</a>
@@ -120,15 +100,43 @@
           </tbody>
         </table>
         {% endif %}
+        
+        {% if files|length > 0 %}
+        <h2>{{ _('Course Materials') }}</h2>
+        <table class="data-table">
+          <colgroup>
+            <col class="col--name">
+            <col class="col--size">
+          </colgroup>
+          <tbody>
+            {% for file in files %}
+            <tr>
+              <td class="col--name">
+                <a href="{{ url('course_file_download', cid=cdoc.docId, filename=file.name) }}">
+                  <span class="icon icon-file"></span>
+                  {{ file.name }}
+                </a>
+              </td>
+              <td class="col--size">{{ file.size|size }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
       </div>
     </div>
     
-    {% if ddocs|length > 0 %}
     <div class="section">
       <div class="section__header">
         <h1 class="section__title">{{ _('Discussion') }}</h1>
+        {% if handler.user.hasPerm(PERM.PERM_CREATE_DISCUSSION) %}
+        <a href="{{ url('discussion_create', type=50, docId=cdoc.docId) }}" class="primary rounded button">
+          {{ _('New Discussion') }}
+        </a>
+        {% endif %}
       </div>
       <div class="section__body">
+        {% if ddocs|length > 0 %}
         {% for ddoc in ddocs %}
         <div class="dhead">
           <a href="{{ url('discussion_detail', did=ddoc.docId) }}">{{ ddoc.title }}</a>
@@ -136,12 +144,36 @@
         </div>
         {% endfor %}
         {{ paginate(page, dpcount, url('course_detail', cid=cdoc.docId)) }}
+        {% else %}
+        <p class="text-muted">{{ _('No discussions yet.') }}</p>
+        {% endif %}
       </div>
     </div>
-    {% endif %}
   </div>
   
   <div class="medium-3 columns">
+    <div class="section side">
+      <div class="section__header">
+        <h1 class="section__title">{{ _('Quick Links') }}</h1>
+      </div>
+      <div class="section__body">
+        <ul class="menu">
+          <li class="menu__item">
+            <a href="{{ url('course_records', cid=cdoc.docId) }}">
+              <span class="icon icon-flag"></span>
+              {{ _('Records') }}
+            </a>
+          </li>
+          <li class="menu__item">
+            <a href="{{ url('course_scoreboard', cid=cdoc.docId) }}">
+              <span class="icon icon-statistics"></span>
+              {{ _('Scoreboard') }}
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    
     {% if cdoc.teachers and cdoc.teachers|length > 0 %}
     <div class="section side">
       <div class="section__header">
