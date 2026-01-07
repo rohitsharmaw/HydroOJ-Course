@@ -1,0 +1,203 @@
+{% extends "layout/basic.html" %}
+{% block content %}
+<div class="row">
+  <div class="medium-9 columns">
+    <div class="section">
+      <div class="section__header">
+        <h1 class="section__title">{{ cdoc.title }}</h1>
+        <div class="section__tools">
+          {% if handler.user.own(cdoc) or handler.user.hasPerm(PERM.PERM_EDIT_HOMEWORK) %}
+          <a href="{{ url('course_edit', cid=cdoc.docId) }}" class="tool-button" data-tooltip="{{ _('Edit') }}">
+            <span class="icon icon-edit"></span>
+          </a>
+          <a href="{{ url('course_files', cid=cdoc.docId) }}" class="tool-button" data-tooltip="{{ _('Manage Files') }}">
+            <span class="icon icon-file"></span>
+          </a>
+          {% endif %}
+          <a href="{{ url('course_scoreboard', cid=cdoc.docId) }}" class="tool-button" data-tooltip="{{ _('Scoreboard') }}">
+            <span class="icon icon-statistics"></span>
+          </a>
+        </div>
+      </div>
+      <div class="section__body typo">
+        <div class="course-meta">
+          <span class="course-meta__item">
+            <span class="icon icon-schedule"></span>
+            {{ cdoc.beginAt|date }} - {{ cdoc.endAt|date }}
+          </span>
+          <span class="course-meta__item">
+            <span class="icon icon-user"></span>
+            {{ cdoc.attend or 0 }} {{ _('enrolled') }}
+          </span>
+        </div>
+        
+        {% if not csdoc or not csdoc.attend %}
+        <div class="course-action">
+          {% if cdoc.endAt > Date.now() %}
+          <form method="post">
+            <input type="hidden" name="operation" value="attend">
+            <button type="submit" class="rounded primary button">{{ _('Join Course') }}</button>
+          </form>
+          {% else %}
+          <p class="note note--warning">{{ _('Course has ended') }}</p>
+          {% endif %}
+        </div>
+        {% endif %}
+        
+        <h2>{{ _('Course Introduction') }}</h2>
+        <div class="course-content">
+          {{ cdoc.content|markdown|safe }}
+        </div>
+        
+        {% if files|length > 0 %}
+        <h2>{{ _('Course Materials') }}</h2>
+        <table class="data-table">
+          <colgroup>
+            <col class="col--name">
+            <col class="col--size">
+          </colgroup>
+          <tbody>
+            {% for file in files %}
+            <tr>
+              <td class="col--name">
+                <a href="{{ url('course_file_download', cid=cdoc.docId, filename=file.name) }}">
+                  <span class="icon icon-file"></span>
+                  {{ file.name }}
+                </a>
+              </td>
+              <td class="col--size">{{ file.size|size }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+        
+        {% if pdict|length > 0 %}
+        <h2>{{ _('Problem List') }}</h2>
+        <table class="data-table">
+          <colgroup>
+            <col class="col--problem">
+            <col class="col--status">
+            <col class="col--score">
+          </colgroup>
+          <thead>
+            <tr>
+              <th class="col--problem">{{ _('Problem') }}</th>
+              <th class="col--status">{{ _('Status') }}</th>
+              <th class="col--score">{{ _('Score') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pid in cdoc.pids %}
+            {% set pdoc = pdict[pid] %}
+            <tr>
+              <td class="col--problem">
+                {% if pdoc %}
+                <a href="{{ url('problem_detail', pid=pdoc.docId) }}">{{ pdoc.title }}</a>
+                {% else %}
+                <span class="text-muted">{{ _('Problem not found') }}</span>
+                {% endif %}
+              </td>
+              <td class="col--status">
+                {% if psdict[pid] %}
+                {% set status = psdict[pid].status %}
+                <span class="record-status--text {{ 'pass' if status == 1 else 'fail' if status > 1 else '' }}">
+                  {{ STATUS_SHORT_TEXTS[status] or _('Not Submitted') }}
+                </span>
+                {% else %}
+                <span class="text-muted">{{ _('Not Submitted') }}</span>
+                {% endif %}
+              </td>
+              <td class="col--score">
+                {% if psdict[pid] %}
+                {{ psdict[pid].score or 0 }}
+                {% else %}
+                -
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+      </div>
+    </div>
+    
+    {% if ddocs|length > 0 %}
+    <div class="section">
+      <div class="section__header">
+        <h1 class="section__title">{{ _('Discussion') }}</h1>
+      </div>
+      <div class="section__body">
+        {% for ddoc in ddocs %}
+        <div class="dhead">
+          <a href="{{ url('discussion_detail', did=ddoc.docId) }}">{{ ddoc.title }}</a>
+          <span class="text-muted">{{ udict[ddoc.owner].uname }}</span>
+        </div>
+        {% endfor %}
+        {{ paginate(page, dpcount, url('course_detail', cid=cdoc.docId)) }}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  
+  <div class="medium-3 columns">
+    {% if cdoc.teachers and cdoc.teachers|length > 0 %}
+    <div class="section side">
+      <div class="section__header">
+        <h1 class="section__title">{{ _('Teachers') }}</h1>
+      </div>
+      <div class="section__body">
+        <ul class="user-list">
+          {% for uid in cdoc.teachers %}
+          {% set udoc = udict[uid] %}
+          {% if udoc %}
+          <li class="user-list__item">
+            <a href="{{ url('user_detail', uid=uid) }}">{{ udoc.uname }}</a>
+          </li>
+          {% endif %}
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% endif %}
+    
+    <div class="section side">
+      <div class="section__header">
+        <h1 class="section__title">{{ _('Enrolled Students') }}</h1>
+      </div>
+      <div class="section__body">
+        {% if enrolledUsers|length > 0 %}
+        <ul class="user-list">
+          {% for uid in enrolledUsers %}
+          {% set udoc = enrolledUdict[uid] %}
+          {% if udoc %}
+          <li class="user-list__item">
+            <a href="{{ url('user_detail', uid=uid) }}">{{ udoc.uname }}</a>
+          </li>
+          {% endif %}
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted">{{ _('No students enrolled yet.') }}</p>
+        {% endif %}
+      </div>
+    </div>
+    
+    {% if cdoc.classes and cdoc.classes|length > 0 %}
+    <div class="section side">
+      <div class="section__header">
+        <h1 class="section__title">{{ _('Classes') }}</h1>
+      </div>
+      <div class="section__body">
+        <ul class="class-list">
+          {% for cls in cdoc.classes %}
+          <li class="class-list__item">{{ cls }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "layout/basic.html" %}
+{% block content %}
+<div class="row">
+  <div class="medium-9 columns">
+    <div class="section">
+      <div class="section__header">
+        <h1 class="section__title">{{ _('Course List') }}</h1>
+        {% if handler.user.hasPerm(PERM.PERM_CREATE_HOMEWORK) %}
+        <a href="{{ url('course_create') }}" class="primary rounded button">{{ _('Create Course') }}</a>
+        {% endif %}
+      </div>
+      <div class="section__body">
+        <form action="" method="get" class="form--inline">
+          <div class="row">
+            <div class="columns medium-8">
+              <input type="text" name="q" value="{{ q }}" placeholder="{{ _('Search') }}">
+            </div>
+            <div class="columns medium-4">
+              <select name="group">
+                <option value="">{{ _('All Classes') }}</option>
+                {% for g in groups %}
+                <option value="{{ g }}" {{ 'selected' if g == group else '' }}>{{ g }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </form>
+        {% if cdocs|length == 0 %}
+        <div class="typo">
+          <p>{{ _('No courses found.') }}</p>
+        </div>
+        {% else %}
+        <table class="data-table">
+          <colgroup>
+            <col class="col--title">
+            <col class="col--date">
+            <col class="col--date">
+            <col class="col--status">
+          </colgroup>
+          <thead>
+            <tr>
+              <th class="col--title">{{ _('Title') }}</th>
+              <th class="col--date">{{ _('Begin At') }}</th>
+              <th class="col--date">{{ _('End At') }}</th>
+              <th class="col--status">{{ _('Status') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cdoc in cdocs %}
+            <tr>
+              <td class="col--title">
+                <a href="{{ url('course_detail', cid=cdoc.docId) }}">{{ cdoc.title }}</a>
+              </td>
+              <td class="col--date">
+                <span class="time relative" data-timestamp="{{ cdoc.beginAt.getTime() // 1000 }}">
+                  {{ cdoc.beginAt|date }}
+                </span>
+              </td>
+              <td class="col--date">
+                <span class="time relative" data-timestamp="{{ cdoc.endAt.getTime() // 1000 }}">
+                  {{ cdoc.endAt|date }}
+                </span>
+              </td>
+              <td class="col--status">
+                {% if cdoc.endAt < Date.now() %}
+                <span class="course-status course-status--done">{{ _('Done') }}</span>
+                {% elif cdoc.beginAt > Date.now() %}
+                <span class="course-status course-status--pending">{{ _('Not Started') }}</span>
+                {% else %}
+                <span class="course-status course-status--ongoing">{{ _('Ongoing') }}</span>
+                {% endif %}
+                {% if csdict[cdoc.docId.toString()] and csdict[cdoc.docId.toString()].attend %}
+                <span class="icon icon-check" title="{{ _('Enrolled') }}"></span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {{ paginate(page, cpcount, url('course_main'), qs) }}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="medium-3 columns">
+    <div class="section side">
+      <div class="section__header">
+        <h1 class="section__title">{{ _('Filter') }}</h1>
+      </div>
+      <div class="section__body">
+        <ul class="menu">
+          <li class="menu__item {{ 'active' if not group else '' }}">
+            <a href="{{ url('course_main') }}">{{ _('All') }}</a>
+          </li>
+          {% for g in groups %}
+          <li class="menu__item {{ 'active' if g == group else '' }}">
+            <a href="{{ url('course_main') }}?group={{ g }}">{{ g }}</a>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
