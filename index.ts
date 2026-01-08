@@ -696,5 +696,3 @@ export async function apply(ctx: Context) {
     // Register model globally
     (global as any).Hydro.model.course = CourseModel;
 }
-
-export default apply;
