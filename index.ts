@@ -1,11 +1,8 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import { escapeRegExp, pick } from 'lodash';
-import { Filter, ObjectId } from 'mongodb';
-import { sortFiles, Time } from '@hydrooj/utils/lib/utils';
 import {
     Context, DiscussionModel, DocumentModel, FileLimitExceededError,
-    FileUploadError, Handler, NotFoundError, PERM, ProblemModel, PRIV, RecordModel,
-    StorageModel, SystemModel, UserModel, ValidationError,
+    FileUploadError, Filter, Handler, NotFoundError, ObjectId, PERM, ProblemModel, PRIV, RecordModel,
+    sortFiles, StorageModel, SystemModel, Time, UserModel, ValidationError,
 } from 'hydrooj';
 import { param, post, Types } from 'hydrooj';
 
