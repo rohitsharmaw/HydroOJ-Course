@@ -218,6 +218,7 @@ class CourseMainHandler extends Handler {
             groups: groupsFilter,
             group,
             q,
+            now: new Date(),
         };
         this.response.template = 'course_main.html';
     }
@@ -286,6 +287,9 @@ class CourseDetailHandler extends Handler {
             }
         }
 
+        // Filter out any files with null/undefined names before sorting
+        const validFiles = (this.cdoc.files || []).filter((f) => f && f.name);
+        
         this.response.template = 'course_detail.html';
         this.response.body = {
             cdoc: this.cdoc,
@@ -300,7 +304,8 @@ class CourseDetailHandler extends Handler {
             rdict,
             enrolledUsers,
             enrolledUdict,
-            files: sortFiles(this.cdoc.files || []),
+            files: sortFiles(validFiles),
+            now: new Date(),
         };
 
         // Replace file:// references
@@ -338,12 +343,32 @@ class CourseEditHandler extends Handler {
     @param('cid', Types.ObjectId, true)
     async get(domainId: string, cid?: ObjectId) {
         const groups = await UserModel.listGroup(domainId);
+        
+        // Format dates for the form inputs
+        let dateBeginText = '';
+        let timeBeginText = '00:00';
+        let dateEndText = '';
+        let timeEndText = '23:59';
+        
+        if (this.cdoc) {
+            const beginAt = this.cdoc.beginAt;
+            const endAt = this.cdoc.endAt;
+            dateBeginText = `${beginAt.getFullYear()}-${String(beginAt.getMonth() + 1).padStart(2, '0')}-${String(beginAt.getDate()).padStart(2, '0')}`;
+            timeBeginText = `${String(beginAt.getHours()).padStart(2, '0')}:${String(beginAt.getMinutes()).padStart(2, '0')}`;
+            dateEndText = `${endAt.getFullYear()}-${String(endAt.getMonth() + 1).padStart(2, '0')}-${String(endAt.getDate()).padStart(2, '0')}`;
+            timeEndText = `${String(endAt.getHours()).padStart(2, '0')}:${String(endAt.getMinutes()).padStart(2, '0')}`;
+        }
+        
         this.response.template = 'course_edit.html';
         this.response.body = {
             cdoc: this.cdoc,
             groups,
             page_name: cid ? 'course_edit' : 'course_create',
             pids: this.cdoc ? this.cdoc.pids.join(',') : '',
+            dateBeginText,
+            timeBeginText,
+            dateEndText,
+            timeEndText,
         };
     }
 
@@ -440,11 +465,13 @@ class CourseFilesHandler extends Handler {
 
     @param('cid', Types.ObjectId)
     async get(domainId: string, cid: ObjectId) {
+        // Filter out any files with null/undefined names before sorting
+        const validFiles = (this.cdoc.files || []).filter((f) => f && f.name);
         this.response.body = {
             cdoc: this.cdoc,
             csdoc: await CourseModel.getStatus(domainId, cid, this.user._id),
             udoc: await UserModel.getById(domainId, this.cdoc.owner),
-            files: sortFiles(this.cdoc.files || []),
+            files: sortFiles(validFiles),
             urlForFile: (filename: string) => this.url('course_file_download', { cid, filename }),
         };
         this.response.pjax = 'partials/files.html';
@@ -459,13 +486,17 @@ class CourseFilesHandler extends Handler {
         }
         const file = this.request.files?.file;
         if (!file) throw new ValidationError('file');
+        // Use original filename if custom filename not provided
+        const originalName = file.originalFilename || file.newFilename;
+        const actualFilename = filename || originalName;
+        if (!actualFilename) throw new ValidationError('filename');
         const size = (this.cdoc.files || []).reduce((acc, i) => acc + (i.size || 0), 0) + file.size;
         if (size >= SystemModel.get('limit.contest_files_size')) {
             throw new FileLimitExceededError('size');
         }
-        await StorageModel.put(`course/${domainId}/${cid}/${filename}`, file.filepath, this.user._id);
-        const meta = await StorageModel.getMeta(`course/${domainId}/${cid}/${filename}`);
-        const payload = { _id: filename, name: filename, ...pick(meta, ['size', 'lastModified', 'etag']) };
+        await StorageModel.put(`course/${domainId}/${cid}/${actualFilename}`, file.filepath, this.user._id);
+        const meta = await StorageModel.getMeta(`course/${domainId}/${cid}/${actualFilename}`);
+        const payload = { _id: actualFilename, name: actualFilename, ...pick(meta, ['size', 'lastModified', 'etag']) };
         if (!meta) throw new FileUploadError();
         await CourseModel.edit(domainId, cid, { files: [...(this.cdoc.files || []), payload] } as any);
         this.back();

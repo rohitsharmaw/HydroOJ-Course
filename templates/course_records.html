@@ -37,8 +37,8 @@
             <tr>
               <td class="col--status">
                 <a href="{{ url('record_detail', rid=rdoc._id) }}">
-                  <span class="record-status--text {{ 'pass' if rdoc.status == 1 else 'fail' if rdoc.status > 1 else '' }}">
-                    {{ STATUS_SHORT_TEXTS[rdoc.status] or _('Pending') }}
+                  <span class="record-status--text {% if rdoc.status == 1 %}pass{% elif rdoc.status > 1 %}fail{% endif %}">
+                    {% if STATUS_SHORT_TEXTS[rdoc.status] %}{{ STATUS_SHORT_TEXTS[rdoc.status] }}{% else %}{{ _('Pending') }}{% endif %}
                   </span>
                 </a>
               </td>
@@ -71,9 +71,7 @@
                 {% endif %}
               </td>
               <td class="col--submit-at">
-                <span class="time relative" data-timestamp="{{ rdoc._id.getTimestamp().getTime() // 1000 }}">
-                  {{ rdoc._id.getTimestamp()|date }}
-                </span>
+                {{ datetimeSpan(rdoc._id.getTimestamp())|safe }}
               </td>
             </tr>
             {% endfor %}

@@ -52,19 +52,15 @@
                 <a href="{{ url('course_detail', cid=cdoc.docId) }}">{{ cdoc.title }}</a>
               </td>
               <td class="col--date">
-                <span class="time relative" data-timestamp="{{ cdoc.beginAt.getTime() // 1000 }}">
-                  {{ cdoc.beginAt|date }}
-                </span>
+                {{ datetimeSpan(cdoc.beginAt)|safe }}
               </td>
               <td class="col--date">
-                <span class="time relative" data-timestamp="{{ cdoc.endAt.getTime() // 1000 }}">
-                  {{ cdoc.endAt|date }}
-                </span>
+                {{ datetimeSpan(cdoc.endAt)|safe }}
               </td>
               <td class="col--status">
-                {% if cdoc.endAt < Date.now() %}
+                {% if cdoc.endAt < now %}
                 <span class="course-status course-status--done">{{ _('Done') }}</span>
-                {% elif cdoc.beginAt > Date.now() %}
+                {% elif cdoc.beginAt > now %}
                 <span class="course-status course-status--pending">{{ _('Not Started') }}</span>
                 {% else %}
                 <span class="course-status course-status--ongoing">{{ _('Ongoing') }}</span>

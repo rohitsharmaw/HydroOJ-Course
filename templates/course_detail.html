@@ -23,7 +23,7 @@
         <div class="course-meta">
           <span class="course-meta__item">
             <span class="icon icon-schedule"></span>
-            {{ cdoc.beginAt|date }} - {{ cdoc.endAt|date }}
+            {{ datetimeSpan(cdoc.beginAt)|safe }} - {{ datetimeSpan(cdoc.endAt)|safe }}
           </span>
           <span class="course-meta__item">
             <span class="icon icon-user"></span>
@@ -33,7 +33,7 @@
         
         {% if not csdoc or not csdoc.attend %}
         <div class="course-action">
-          {% if cdoc.endAt > Date.now() %}
+          {% if cdoc.endAt > now %}
           <form method="post">
             <input type="hidden" name="operation" value="attend">
             <button type="submit" class="rounded primary button">{{ _('Join Course') }}</button>
@@ -81,8 +81,8 @@
               <td class="col--status">
                 {% if psdict[pid] %}
                 {% set status = psdict[pid].status %}
-                <span class="record-status--text {{ 'pass' if status == 1 else 'fail' if status > 1 else '' }}">
-                  {{ STATUS_SHORT_TEXTS[status] or _('Not Submitted') }}
+                <span class="record-status--text {% if status == 1 %}pass{% elif status > 1 %}fail{% endif %}">
+                  {% if STATUS_SHORT_TEXTS[status] %}{{ STATUS_SHORT_TEXTS[status] }}{% else %}{{ _('Not Submitted') }}{% endif %}
                 </span>
                 {% else %}
                 <span class="text-muted">{{ _('Not Submitted') }}</span>

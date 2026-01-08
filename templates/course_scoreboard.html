@@ -55,8 +55,8 @@
                 {% for pid in cdoc.pids %}
                 <td class="col--problem">
                   {% set score = row.scores[pid] %}
-                  <span class="{{ 'pass' if score >= 100 else 'fail' if score > 0 else '' }}">
-                    {{ score if score else '-' }}
+                  <span class="{% if score >= 100 %}pass{% elif score > 0 %}fail{% endif %}">
+                    {% if score %}{{ score }}{% else %}-{% endif %}
                   </span>
                 </td>
                 {% endfor %}

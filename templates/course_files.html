@@ -55,9 +55,7 @@
                 <td class="col--size">{{ file.size|size }}</td>
                 <td class="col--date">
                   {% if file.lastModified %}
-                  <span class="time relative" data-timestamp="{{ file.lastModified.getTime() // 1000 }}">
-                    {{ file.lastModified|date }}
-                  </span>
+                  {{ datetimeSpan(file.lastModified)|safe }}
                   {% else %}
                   -
                   {% endif %}
