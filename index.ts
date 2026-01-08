@@ -607,9 +607,6 @@ export async function apply(ctx: Context) {
     ctx.Route('course_scoreboard', '/course/:cid/scoreboard', CourseScoreboardHandler, PERM.PERM_VIEW_HOMEWORK_SCOREBOARD);
     ctx.Route('course_records', '/course/:cid/records', CourseRecordsHandler, PERM.PERM_VIEW_HOMEWORK);
 
-    // Inject navigation entry - after training, before contest
-    ctx.inject('Nav', 'course_main', { prefix: 'course', before: 'contest_main' }, PERM.PERM_VIEW_HOMEWORK);
-
     // Add i18n translations
     ctx.i18n.load('zh', {
         course: '课程',
