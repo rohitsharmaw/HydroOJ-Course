@@ -557,6 +557,47 @@ class CourseScoreboardHandler extends Handler {
     }
 }
 
+// Course Records Handler
+class CourseRecordsHandler extends Handler {
+    @param('cid', Types.ObjectId)
+    @param('page', Types.PositiveInt, true)
+    async get(domainId: string, cid: ObjectId, page = 1) {
+        const cdoc = await CourseModel.get(domainId, cid);
+        if (!cdoc) throw new CourseNotFoundError(domainId, cid);
+
+        // Get records for problems in this course
+        const query: any = {
+            pid: { $in: cdoc.pids },
+        };
+
+        // Only show own records if user doesn't have permission to view all records
+        // Users who can view scoreboard (teachers/admins) can see all students' records
+        if (!this.user.hasPerm(PERM.PERM_VIEW_HOMEWORK_SCOREBOARD)) {
+            query.uid = this.user._id;
+        }
+
+        const cursor = RecordModel.getMulti(domainId, query).sort({ _id: -1 });
+        const [rdocs, rpcount] = await this.paginate(cursor, page, 'record');
+
+        // Get user info for all records
+        const uids = [...new Set(rdocs.map((r) => r.uid))];
+        const udict = await UserModel.getListForRender(domainId, uids);
+
+        // Get problem info
+        const pdict = await ProblemModel.getList(domainId, cdoc.pids, true, true);
+
+        this.response.template = 'course_records.html';
+        this.response.body = {
+            cdoc,
+            rdocs,
+            pdict,
+            udict,
+            page,
+            rpcount,
+        };
+    }
+}
+
 // Plugin apply function
 export async function apply(ctx: Context) {
     // Register routes
@@ -567,6 +608,7 @@ export async function apply(ctx: Context) {
     ctx.Route('course_files', '/course/:cid/file', CourseFilesHandler, PERM.PERM_VIEW_HOMEWORK);
     ctx.Route('course_file_download', '/course/:cid/file/:filename', CourseFileDownloadHandler, PERM.PERM_VIEW_HOMEWORK);
     ctx.Route('course_scoreboard', '/course/:cid/scoreboard', CourseScoreboardHandler, PERM.PERM_VIEW_HOMEWORK_SCOREBOARD);
+    ctx.Route('course_records', '/course/:cid/records', CourseRecordsHandler, PERM.PERM_VIEW_HOMEWORK);
 
     // Inject navigation entry - after training, before contest
     ctx.inject('Nav', 'course_main', { prefix: 'course', before: 'contest_main' }, PERM.PERM_VIEW_HOMEWORK);
@@ -580,12 +622,14 @@ export async function apply(ctx: Context) {
         course_edit: '编辑课程',
         course_files: '课程文件',
         course_scoreboard: '成绩表',
+        course_records: '提交记录',
         'Create Course': '创建课程',
         'Edit Course': '编辑课程',
         'Course List': '课程列表',
         'Course Detail': '课程详情',
         'Course Files': '课程文件',
         'Course Scoreboard': '成绩表',
+        'Course Records': '提交记录',
         'Join Course': '加入课程',
         'Course Introduction': '课程介绍',
         'Course Materials': '课程资料',
@@ -601,6 +645,14 @@ export async function apply(ctx: Context) {
         'Total Score': '总分',
         'Progress': '进度',
         'Student': '学生',
+        'Records': '提交记录',
+        'Quick Links': '快速链接',
+        'New Discussion': '发起讨论',
+        'No discussions yet.': '暂无讨论。',
+        'Discussion': '讨论',
+        'Submitter': '提交者',
+        'Submit Time': '提交时间',
+        'No records yet.': '暂无提交记录。',
     });
 
     ctx.i18n.load('en', {
@@ -611,12 +663,14 @@ export async function apply(ctx: Context) {
         course_edit: 'Edit Course',
         course_files: 'Course Files',
         course_scoreboard: 'Scoreboard',
+        course_records: 'Records',
         'Create Course': 'Create Course',
         'Edit Course': 'Edit Course',
         'Course List': 'Course List',
         'Course Detail': 'Course Detail',
         'Course Files': 'Course Files',
         'Course Scoreboard': 'Scoreboard',
+        'Course Records': 'Records',
         'Join Course': 'Join Course',
         'Course Introduction': 'Course Introduction',
         'Course Materials': 'Course Materials',
@@ -632,6 +686,14 @@ export async function apply(ctx: Context) {
         'Total Score': 'Total Score',
         'Progress': 'Progress',
         'Student': 'Student',
+        'Records': 'Records',
+        'Quick Links': 'Quick Links',
+        'New Discussion': 'New Discussion',
+        'No discussions yet.': 'No discussions yet.',
+        'Discussion': 'Discussion',
+        'Submitter': 'Submitter',
+        'Submit Time': 'Submit Time',
+        'No records yet.': 'No records yet.',
     });
 
     // Register model globally
